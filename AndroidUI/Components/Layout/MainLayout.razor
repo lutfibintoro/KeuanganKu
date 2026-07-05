@@ -1,0 +1,34 @@
+﻿@inherits LayoutComponentBase
+
+<div class="app-layout">
+    <header class="app-header">
+        <img src="/images/purple.png" class="image-icon" />
+        <h1 class="app-title">KeuanganKu</h1>
+    </header>
+
+    <main class="app-content">
+        @Body
+    </main>
+
+    <nav class="bottom-nav">
+        <NavLink class="nav-item" href="/" Match="NavLinkMatch.All">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Dashboard</span>
+        </NavLink>
+        <NavLink class="nav-item" href="/transactions">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Transaksi</span>
+        </NavLink>
+        <NavLink class="nav-item" href="/reports">
+            <span class="nav-icon">📈</span>
+            <span class="nav-label">Laporan</span>
+        </NavLink>
+        <NavLink class="nav-item" href="/settings">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">Pengaturan</span>
+        </NavLink>
+    </nav>
+</div>
+
+@code {
+}

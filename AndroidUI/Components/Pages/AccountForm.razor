@@ -1,0 +1,108 @@
+@page "/accounts/add"
+@page "/accounts/edit/{Id:int}"
+@layout MainLayout
+
+<div class="page">
+    <div class="page-header">
+        <h2>@(isEdit ? "Edit" : "Tambah") Akun</h2>
+    </div>
+
+    <div class="form-card">
+        <div class="form-group">
+            <label>Nama Akun</label>
+            <input type="text" class="form-input" @bind="model.Name" placeholder="Nama akun..." />
+        </div>
+
+        <div class="form-group">
+            <label>Tipe Akun</label>
+            <select class="form-select" @bind="model.Type">
+                <option value="Cash">💵 Tunai</option>
+                <option value="Bank">🏦 Bank</option>
+                <option value="E-Wallet">📱 E-Wallet</option>
+                <option value="Investment">📈 Investasi</option>
+                <option value="Savings">🐷 Tabungan</option>
+                <option value="Other">📦 Lainnya</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Saldo Awal</label>
+            <div class="input-amount-wrapper">
+                <span class="currency-prefix">Rp</span>
+                <input type="number" class="form-input input-amount" @bind="balanceStr"
+                       placeholder="0" step="1000" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Icon</label>
+            <div class="icon-picker">
+                @foreach (var icon in availableIcons)
+                {
+                    <button class="icon-option @(model.Icon == icon ? "selected" : "")"
+                            @onclick='() => model.Icon = icon'>
+                        @icon
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Warna</label>
+            <div class="color-picker">
+                @foreach (var color in availableColors)
+                {
+                    <button class="color-option @(model.ColorHex == color ? "selected" : "")"
+                            style="background:@color"
+                            @onclick='() => model.ColorHex = color'>
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button class="btn btn-secondary" @onclick="GoBack">Batal</button>
+            <button class="btn btn-primary" @onclick="SaveAsync">Simpan</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    [Inject] private AccountService accountService { get; set; } = default!;
+    [Inject] private NavigationManager nav { get; set; } = default!;
+
+    private Account model = new() { ColorHex = "#2196F3", Icon = "🏦", Type = "Bank" };
+    private bool isEdit;
+    private string balanceStr = "0";
+
+    private readonly string[] availableIcons = { "💵", "🏦", "📱", "📈", "🐷", "💰", "💳", "🏠", "📦", "🎯" };
+    private readonly string[] availableColors = { "#F44336", "#E91E63", "#9C27B0", "#3F51B5", "#2196F3", "#00BCD4", "#009688", "#4CAF50", "#FF9800", "#FF5722", "#607D8B" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        isEdit = Id > 0;
+        if (isEdit)
+        {
+            var existing = await accountService.GetByIdAsync(Id);
+            if (existing is not null)
+            {
+                model = existing;
+                balanceStr = model.Balance.ToString("F0");
+            }
+        }
+    }
+
+    private void GoBack() => nav.NavigateTo("/accounts");
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(model.Name)) return;
+        if (!isEdit && decimal.TryParse(balanceStr, out var bal))
+            model.Balance = bal;
+
+        await accountService.SaveAsync(model);
+        nav.NavigateTo("/accounts");
+    }
+}

@@ -1,0 +1,38 @@
+@if (Items.Count > 0)
+{
+    <div class="pie-chart-container">
+        <svg viewBox="0 0 100 100" class="pie-svg">
+            @{
+                var total = Items.Sum(i => i.Value);
+                if (total > 0)
+                {
+                    double cumulative = 0;
+                    foreach (var item in Items)
+                    {
+                        var startAngle = cumulative / total * 360;
+                        var endAngle = (cumulative + item.Value) / total * 360;
+                        cumulative += item.Value;
+
+                        var pct = item.Value / total;
+                        var circumference = 2 * Math.PI * 40;
+                        var offset = circumference * (1 - pct);
+
+                        <circle cx="50" cy="50" r="40"
+                                fill="none"
+                                stroke="@item.Color"
+                                stroke-width="20"
+                                stroke-dasharray="@circumference"
+                                stroke-dashoffset="@offset"
+                                transform="rotate(-90, 50, 50)" />
+                    }
+                }
+            }
+        </svg>
+    </div>
+}
+
+@code {
+    public record PieItem(string Label, double Value, string Color);
+
+    [Parameter] public List<PieItem> Items { get; set; } = new();
+}

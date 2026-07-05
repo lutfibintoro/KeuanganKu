@@ -1,0 +1,23 @@
+<div class="summary-card @TypeClass">
+    <div class="sc-icon">@Icon</div>
+    <div class="sc-body">
+        <div class="sc-label">@Label</div>
+        <div class="sc-value">@Value</div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public string Icon { get; set; } = "";
+    [Parameter] public string Type { get; set; } = "default";
+
+    private string TypeClass => Type switch
+    {
+        "income" => "card-income",
+        "expense" => "card-expense",
+        "positive" => "card-positive",
+        "negative" => "card-negative",
+        _ => ""
+    };
+}

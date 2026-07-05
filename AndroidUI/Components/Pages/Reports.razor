@@ -1,0 +1,138 @@
+@page "/reports"
+@layout MainLayout
+
+<div class="page">
+    <div class="page-header">
+        <h2>Laporan</h2>
+    </div>
+
+    <div class="filter-bar">
+        <select class="form-select" @bind="selectedMonth" @bind:after="LoadAsync">
+            @for (int i = 0; i < 12; i++)
+            {
+                var m = DateTime.Now.AddMonths(-i);
+                <option value="@m.Month">@GetMonthName(m.Month)</option>
+            }
+        </select>
+        <input type="number" class="form-input" @bind="selectedYear" @bind:after="LoadAsync"
+               style="width:80px" />
+    </div>
+
+    <div class="summary-cards">
+        <div class="summary-card income">
+            <div class="sc-label">Pemasukan</div>
+            <div class="sc-value">@FormatRupiah(monthlySummary.Income)</div>
+        </div>
+        <div class="summary-card expense">
+            <div class="sc-label">Pengeluaran</div>
+            <div class="sc-value">@FormatRupiah(monthlySummary.Expense)</div>
+        </div>
+        <div class="summary-card balance @(monthlySummary.Balance >= 0 ? "positive" : "negative")">
+            <div class="sc-label">Selisih</div>
+            <div class="sc-value">@FormatRupiah(monthlySummary.Balance)</div>
+        </div>
+    </div>
+
+    @if (categoryExpenses.Count > 0)
+    {
+        var totalExp = categoryExpenses.Sum(c => c.Amount);
+        var circ = 2 * Math.PI * 40;
+
+        <div class="section">
+            <h3>Pengeluaran per Kategori</h3>
+            <div class="pie-chart">
+                <svg viewBox="0 0 100 100">
+                    @{
+                        double cumAngle = 0;
+                        foreach (var c in categoryExpenses)
+                        {
+                            var pct = (double)(c.Amount / totalExp);
+                            var segLen = pct * circ;
+                            var offset = -(cumAngle / 360.0) * circ;
+                            cumAngle += pct * 360;
+
+                            <circle cx="50" cy="50" r="40"
+                                    fill="none"
+                                    stroke="@c.ColorHex"
+                                    stroke-width="20"
+                                    stroke-dasharray="@($"{segLen:F2} {circ:F2}")"
+                                    stroke-dashoffset="@($"{offset:F2}")"
+                                    transform="rotate(-90, 50, 50)" />
+                        }
+                    }
+                </svg>
+            </div>
+
+            <div class="category-breakdown">
+                @foreach (var c in categoryExpenses)
+                {
+                    <div class="breakdown-item">
+                        <span class="bd-dot" style="background:@c.ColorHex"></span>
+                        <span class="bd-icon">@c.Icon</span>
+                        <span class="bd-name">@c.CategoryName</span>
+                        <span class="bd-pct">@c.Percentage.ToString("F0")%</span>
+                        <span class="bd-amount">@FormatRupiah(c.Amount)</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="section">
+        <h3>Tren Tahunan @selectedYear</h3>
+        <div class="bar-chart">
+            @{
+                var maxVal = trend.Any() ? trend.Max(t => Math.Max(t.Income, t.Expense)) : 1;
+                if (maxVal == 0) maxVal = 1;
+                var barHeight = 120m;
+            }
+            <div class="bar-chart-inner">
+                @foreach (var t in trend)
+                {
+                    var incH = t.Income / maxVal * barHeight;
+                    var expH = t.Expense / maxVal * barHeight;
+                    <div class="bar-group">
+                        <div class="bar-column">
+                            <div class="bar bar-income" style="height:@(incH)px" title="Pemasukan @FormatRupiah(t.Income)"></div>
+                            <div class="bar bar-expense" style="height:@(expH)px" title="Pengeluaran @FormatRupiah(t.Expense)"></div>
+                        </div>
+                        <div class="bar-label">@GetShortMonth(t.Month)</div>
+                    </div>
+                }
+            </div>
+            <div class="chart-legend">
+                <span><span class="legend-dot inc"></span> Pemasukan</span>
+                <span><span class="legend-dot exp"></span> Pengeluaran</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private TransactionService transactionService { get; set; } = default!;
+    [Inject] private ReportService reportService { get; set; } = default!;
+
+    private int selectedMonth = DateTime.Now.Month;
+    private int selectedYear = DateTime.Now.Year;
+    private ReportService.MonthlySummary monthlySummary = new(0, 0, 0, 0, 0);
+    private List<ReportService.CategorySummary> categoryExpenses = new();
+    private List<ReportService.MonthlySummary> trend = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        monthlySummary = (await reportService.GetMonthlyTrendAsync(selectedYear))
+            .FirstOrDefault(t => t.Month == selectedMonth) ?? new ReportService.MonthlySummary(selectedMonth, selectedYear, 0, 0, 0);
+
+        categoryExpenses = await reportService.GetExpenseByCategoryAsync(selectedMonth, selectedYear);
+        trend = await reportService.GetMonthlyTrendAsync(selectedYear);
+    }
+
+    private string FormatRupiah(decimal amount) => $"Rp{amount:N0}";
+    private string GetMonthName(int m) => new DateTime(2000, m, 1).ToString("MMMM");
+    private string GetShortMonth(int m) => new DateTime(2000, m, 1).ToString("MMM");
+}

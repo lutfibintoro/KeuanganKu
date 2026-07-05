@@ -1,0 +1,72 @@
+@page "/categories"
+@layout MainLayout
+
+<div class="page">
+    <div class="page-header">
+        <h2>Kategori</h2>
+        <button class="btn btn-primary btn-sm" @onclick="GoToAdd">+ Baru</button>
+    </div>
+
+    <h4 class="type-heading">💵 Pemasukan</h4>
+    <div class="category-list">
+        @foreach (var cat in incomeCategories)
+        {
+            <div class="category-item">
+                <div class="cat-icon" style="background:@cat.ColorHex">@cat.Icon</div>
+                <span class="cat-name">@cat.Name</span>
+                <div class="cat-actions">
+                    <button class="btn-icon" @onclick="() => GoToEdit(cat.Id)">✏️</button>
+                    <button class="btn-icon" @onclick="() => ConfirmDelete(cat)">🗑️</button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <h4 class="type-heading">💳 Pengeluaran</h4>
+    <div class="category-list">
+        @foreach (var cat in expenseCategories)
+        {
+            <div class="category-item">
+                <div class="cat-icon" style="background:@cat.ColorHex">@cat.Icon</div>
+                <span class="cat-name">@cat.Name</span>
+                <div class="cat-actions">
+                    <button class="btn-icon" @onclick="() => GoToEdit(cat.Id)">✏️</button>
+                    <button class="btn-icon" @onclick="() => ConfirmDelete(cat)">🗑️</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Inject] private CategoryService categoryService { get; set; } = default!;
+    [Inject] private NavigationManager nav { get; set; } = default!;
+
+    private List<Category> incomeCategories = new();
+    private List<Category> expenseCategories = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategoriesAsync();
+    }
+
+    private async Task LoadCategoriesAsync()
+    {
+        var all = await categoryService.GetAllAsync();
+        incomeCategories = all.Where(c => c.Type == "Income").ToList();
+        expenseCategories = all.Where(c => c.Type == "Expense").ToList();
+    }
+
+    private void GoToAdd() => nav.NavigateTo("/categories/add");
+    private void GoToEdit(int id) => nav.NavigateTo($"/categories/edit/{id}");
+
+    private async Task ConfirmDelete(Category cat)
+    {
+        var page = Application.Current!.Windows[0].Page!;
+        if (await page.DisplayAlertAsync("Hapus Kategori", $"Hapus kategori \"{cat.Name}\"?", "Hapus", "Batal"))
+        {
+            await categoryService.DeleteAsync(cat);
+            await LoadCategoriesAsync();
+        }
+    }
+}

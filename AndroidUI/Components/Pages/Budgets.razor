@@ -1,0 +1,99 @@
+@page "/budgets"
+@layout MainLayout
+
+<div class="page">
+    <div class="page-header">
+        <h2>Anggaran</h2>
+        <button class="btn btn-primary btn-sm" @onclick="ShowAddForm">+ Baru</button>
+    </div>
+
+    <div class="filter-bar">
+        <select class="form-select" @bind="selectedMonth" @bind:after="LoadDataAsync">
+            @for (int i = 0; i < 12; i++)
+            {
+                var m = DateTime.Now.AddMonths(-i);
+                <option value="@m.Month">@GetMonthName(m.Month) @m.Year</option>
+            }
+        </select>
+        <input type="number" class="form-input" @bind="selectedYear" @bind:after="LoadDataAsync"
+               style="width:80px" />
+    </div>
+
+    @if (budgets.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="empty-icon">🎯</div>
+            <p>Belum ada anggaran bulan ini</p>
+            <button class="btn btn-primary" @onclick="ShowAddForm">Buat Anggaran</button>
+        </div>
+    }
+
+    <div class="budget-list">
+        @foreach (var b in budgets)
+        {
+            var pct = b.Amount > 0 ? Math.Min(b.Spent / b.Amount * 100, 100) : 0;
+            var catName = b.Category?.Name ?? "";
+            var catIcon = b.Category?.Icon ?? "📄";
+            var catColor = b.Category?.ColorHex ?? "#607D8B";
+            var remaining = Math.Max(b.Amount - b.Spent, 0);
+            <div class="budget-card">
+                <div class="budget-card-header">
+                    <div class="budget-category">
+                        <span class="budget-icon" style="background:@catColor">
+                            @catIcon
+                        </span>
+                        <span>@catName</span>
+                    </div>
+                    <div class="budget-card-actions">
+                        <button class="btn-icon" @onclick="() => EditBudget(b.Id)">✏️</button>
+                        <button class="btn-icon" @onclick="() => ConfirmDelete(b)">🗑️</button>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill @(pct >= 100 ? "danger" : pct >= 80 ? "warning" : "safe")"
+                         style="width:@(pct)%"></div>
+                </div>
+                <div class="budget-stats">
+                    <span>Tersisa: @FormatRupiah(remaining)</span>
+                    <span>@pct.ToString("F0")%</span>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Inject] private BudgetService budgetService { get; set; } = default!;
+    [Inject] private NavigationManager nav { get; set; } = default!;
+
+    private List<Budget> budgets = new();
+    private int selectedMonth = DateTime.Now.Month;
+    private int selectedYear = DateTime.Now.Year;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        budgets = await budgetService.GetByMonthAsync(selectedMonth, selectedYear);
+    }
+
+    private void ShowAddForm() => nav.NavigateTo($"/budgets/add?month={selectedMonth}&year={selectedYear}");
+    private void EditBudget(int id) => nav.NavigateTo($"/budgets/edit/{id}");
+
+    private async Task ConfirmDelete(Budget b)
+    {
+        var catName = b.Category?.Name ?? "";
+        var page = Application.Current!.Windows[0].Page!;
+        if (await page.DisplayAlertAsync("Hapus Anggaran", $"Hapus anggaran {catName}?", "Hapus", "Batal"))
+        {
+            await budgetService.DeleteAsync(b);
+            await LoadDataAsync();
+        }
+    }
+
+    private string FormatRupiah(decimal amount) => $"Rp{amount:N0}";
+    private string GetMonthName(int m) => new DateTime(2000, m, 1).ToString("MMMM");
+}

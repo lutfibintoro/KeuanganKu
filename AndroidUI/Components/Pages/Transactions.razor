@@ -1,0 +1,105 @@
+@page "/transactions"
+@layout MainLayout
+
+<div class="page">
+    <div class="page-header">
+        <h2>Transaksi</h2>
+        <button class="btn btn-primary btn-sm" @onclick="GoToAdd">+ Baru</button>
+    </div>
+
+    <div class="filter-bar">
+        <select class="form-select" @bind="filterMonth" @bind:after="LoadDataAsync">
+            @for (int i = 0; i < 12; i++)
+            {
+                var m = DateTime.Now.AddMonths(-i);
+                <option value="@m.Month">@GetMonthName(m.Month) @m.Year</option>
+            }
+        </select>
+        <select class="form-select" @bind="filterType" @bind:after="LoadDataAsync">
+            <option value="">Semua Tipe</option>
+            <option value="Income">Pemasukan</option>
+            <option value="Expense">Pengeluaran</option>
+        </select>
+    </div>
+
+    <div class="month-summary">
+        <span class="income">Pemasukan: @FormatRupiah(monthlyIncome)</span>
+        <span class="expense">Pengeluaran: @FormatRupiah(monthlyExpense)</span>
+    </div>
+
+    @if (transactions.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <p>Belum ada transaksi</p>
+        </div>
+    }
+
+    <div class="transaction-list">
+        @foreach (var t in transactions)
+        {
+            <div class="transaction-item" @onclick="() => GoToEdit(t.Id)">
+                <div class="trans-icon" style="background:@(t.Category?.ColorHex ?? "#607D8B")">
+                    @(t.Category?.Icon ?? "📄")
+                </div>
+                <div class="trans-info">
+                    <div class="trans-category">@(t.Category?.Name ?? "Tanpa Kategori")</div>
+                    <div class="trans-account">@(t.Account?.Name ?? "") @(t.Date.ToString("dd MMM"))</div>
+                    <div class="trans-account">@(t?.Note ?? "")</div>
+                </div>
+                <div class="trans-amount @(t.Type == "Income" ? "text-income" : "text-expense")">
+                    @(t.Type == "Income" ? "+" : "-")@FormatRupiah(t.Amount)
+                </div>
+                <button class="btn-delete" @onclick:stopPropagation @onclick="() => ConfirmDelete(t)">🗑️</button>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Inject] private TransactionService transactionService { get; set; } = default!;
+    [Inject] private NavigationManager nav { get; set; } = default!;
+
+    private List<Transaction> transactions = new();
+    private int filterMonth = DateTime.Now.Month;
+    private int filterYear = DateTime.Now.Year;
+    private string filterType = "";
+    private decimal monthlyIncome;
+    private decimal monthlyExpense;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        var now = DateTime.Now;
+        filterYear = now.Year;
+        if (filterMonth > now.Month) filterYear = now.Year - 1;
+
+        string? type = string.IsNullOrEmpty(filterType) ? null : filterType;
+        transactions = await transactionService.GetAllAsync(filterMonth, filterYear, null, null, type);
+
+        var summary = await transactionService.GetMonthlySummaryAsync(filterMonth, filterYear);
+        monthlyIncome = summary.Income;
+        monthlyExpense = summary.Expense;
+    }
+
+    private async Task ConfirmDelete(Transaction t)
+    {
+        var msg = $"Hapus transaksi {FormatRupiah(t.Amount)}?";
+        var page = Application.Current!.Windows[0].Page!;
+        if (await page.DisplayAlertAsync("Hapus Transaksi", msg, "Hapus", "Batal"))
+        {
+            await transactionService.DeleteAsync(t);
+            await LoadDataAsync();
+        }
+    }
+
+    private void GoToAdd() => nav.NavigateTo("/transactions/add/Expense");
+    private void GoToEdit(int id) => nav.NavigateTo($"/transactions/edit/{id}");
+
+    private string FormatRupiah(decimal amount) => $"Rp{amount:N0}";
+    private string GetMonthName(int m) => new DateTime(2000, m, 1).ToString("MMMM");
+}

@@ -1,0 +1,93 @@
+@page "/transactions/transfer"
+@layout MainLayout
+
+<div class="page">
+    <div class="page-header">
+        <h2>Transfer Antar Akun</h2>
+    </div>
+
+    <div class="form-card">
+        <div class="form-group">
+            <label>Dari Akun</label>
+            <select class="form-select" @bind="model.FromAccountId">
+                <option value="0">Pilih akun asal...</option>
+                @foreach (var acc in accounts)
+                {
+                    var balText = $"({FormatRupiah(acc.Balance)})";
+                    <option value="@acc.Id">@(acc.Icon ?? "") @acc.Name @balText</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Ke Akun</label>
+            <select class="form-select" @bind="model.ToAccountId">
+                <option value="0">Pilih akun tujuan...</option>
+                @foreach (var acc in accounts)
+                {
+                    var balText = $"({FormatRupiah(acc.Balance)})";
+                    <option value="@acc.Id">@(acc.Icon ?? "") @acc.Name @balText</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Jumlah</label>
+            <div class="input-amount-wrapper">
+                <span class="currency-prefix">Rp</span>
+                <input type="number" class="form-input input-amount" @bind="amountStr"
+                       placeholder="0" step="500" />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Tanggal</label>
+            <input type="date" class="form-input" @bind="model.Date" />
+        </div>
+
+        <div class="form-group">
+            <label>Catatan</label>
+            <input type="text" class="form-input" @bind="model.Note" placeholder="Opsional..." />
+        </div>
+
+        <div class="form-actions">
+            <button class="btn btn-secondary" @onclick="GoBack">Batal</button>
+            <button class="btn btn-primary" @onclick="SaveAsync">Transfer</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private TransferService transferService { get; set; } = default!;
+    [Inject] private AccountService accountService { get; set; } = default!;
+    [Inject] private NavigationManager nav { get; set; } = default!;
+
+    private Transfer model = new();
+    private List<Account> accounts = new();
+    private string amountStr = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        accounts = await accountService.GetAllAsync();
+    }
+
+    private void GoBack() => nav.NavigateTo("/transactions");
+
+    private async Task SaveAsync()
+    {
+        if (!string.IsNullOrEmpty(amountStr) && decimal.TryParse(amountStr, out var amount)
+            && model.FromAccountId > 0 && model.ToAccountId > 0 && model.FromAccountId != model.ToAccountId)
+        {
+            model.Amount = amount;
+            await transferService.SaveAsync(model);
+            nav.NavigateTo("/transactions");
+        }
+        else
+        {
+            var page = Application.Current!.Windows[0].Page!;
+            await page.DisplayAlertAsync("Error", "Periksa kembali data transfer", "OK");
+        }
+    }
+
+    private string FormatRupiah(decimal amount) => $"Rp{amount:N0}";
+}

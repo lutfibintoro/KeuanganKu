@@ -1,0 +1,49 @@
+@page "/accounts"
+@layout MainLayout
+
+<div class="page">
+    <div class="page-header">
+        <h2>Akun</h2>
+        <button class="btn btn-primary btn-sm" @onclick="GoToAdd">+ Baru</button>
+    </div>
+
+    <div class="total-networth">
+        <span class="nw-label">Total Kekayaan</span>
+        <span class="nw-amount">@FormatRupiah(totalBalance)</span>
+    </div>
+
+    <div class="account-list">
+        @foreach (var acc in accounts)
+        {
+            <div class="account-card" @onclick="() => GoToEdit(acc.Id)">
+                <div class="acc-card-icon" style="background:@(acc.ColorHex ?? "#607D8B")">
+                    @(acc.Icon ?? "🏦")
+                </div>
+                <div class="acc-card-info">
+                    <div class="acc-card-name">@acc.Name</div>
+                    <div class="acc-card-type">@acc.Type</div>
+                </div>
+                <div class="acc-card-balance">@FormatRupiah(acc.Balance)</div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Inject] private AccountService accountService { get; set; } = default!;
+    [Inject] private NavigationManager nav { get; set; } = default!;
+
+    private List<Account> accounts = new();
+    private decimal totalBalance;
+
+    protected override async Task OnInitializedAsync()
+    {
+        accounts = await accountService.GetAllAsync();
+        totalBalance = await accountService.GetTotalBalanceAsync();
+    }
+
+    private void GoToAdd() => nav.NavigateTo("/accounts/add");
+    private void GoToEdit(int id) => nav.NavigateTo($"/accounts/edit/{id}");
+
+    private string FormatRupiah(decimal amount) => $"Rp{amount:N0}";
+}

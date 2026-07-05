@@ -1,0 +1,7 @@
+.image-icon {
+    max-height: 95%;
+    width: auto;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    padding: 8px 16px 8px 0px;
+}

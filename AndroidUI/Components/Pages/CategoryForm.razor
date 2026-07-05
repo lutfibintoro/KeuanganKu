@@ -1,0 +1,88 @@
+@page "/categories/add"
+@page "/categories/edit/{Id:int}"
+@layout MainLayout
+
+<div class="page">
+    <div class="page-header">
+        <h2>@(isEdit ? "Edit" : "Tambah") Kategori</h2>
+    </div>
+
+    <div class="form-card">
+        <div class="form-group">
+            <label>Tipe</label>
+            <select class="form-select" @bind="model.Type">
+                <option value="Income">💵 Pemasukan</option>
+                <option value="Expense">💳 Pengeluaran</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Nama Kategori</label>
+            <input type="text" class="form-input" @bind="model.Name" placeholder="Nama kategori..." />
+        </div>
+
+        <div class="form-group">
+            <label>Icon</label>
+            <div class="icon-picker">
+                @foreach (var icon in availableIcons)
+                {
+                    <button class="icon-option @(model.Icon == icon ? "selected" : "")"
+                            @onclick='() => model.Icon = icon'>
+                        @icon
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Warna</label>
+            <div class="color-picker">
+                @foreach (var color in availableColors)
+                {
+                    <button class="color-option @(model.ColorHex == color ? "selected" : "")"
+                            style="background:@color"
+                            @onclick='() => model.ColorHex = color'>
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button class="btn btn-secondary" @onclick="GoBack">Batal</button>
+            <button class="btn btn-primary" @onclick="SaveAsync">Simpan</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    [Inject] private CategoryService categoryService { get; set; } = default!;
+    [Inject] private NavigationManager nav { get; set; } = default!;
+
+    private Category model = new() { ColorHex = "#607D8B", Icon = "📄", Type = "Expense" };
+    private bool isEdit;
+
+    private readonly string[] availableIcons = { "🍽️", "🚗", "🛒", "📄", "🎬", "💊", "📚", "🏋️", "🤝", "💰", "💻", "📈", "🎁", "🏠", "🐾", "✈️", "👕", "📱", "💡", "📤", "📥", "🎓", "👶", "💍", "🎂", "🔧", "🏥" };
+    private readonly string[] availableColors = { "#F44336", "#E91E63", "#9C27B0", "#673AB7", "#3F51B5", "#2196F3", "#00BCD4", "#009688", "#4CAF50", "#8BC34A", "#FF9800", "#FF5722", "#795548", "#607D8B" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        isEdit = Id > 0;
+        if (isEdit)
+        {
+            var existing = await categoryService.GetByIdAsync(Id);
+            if (existing is not null)
+                model = existing;
+        }
+    }
+
+    private void GoBack() => nav.NavigateTo("/categories");
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(model.Name)) return;
+        await categoryService.SaveAsync(model);
+        nav.NavigateTo("/categories");
+    }
+}

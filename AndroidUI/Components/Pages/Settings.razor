@@ -1,0 +1,138 @@
+@page "/settings"
+@layout MainLayout
+
+<div class="page">
+    <div class="page-header">
+        <h2>Pengaturan</h2>
+    </div>
+
+    <div class="settings-group">
+        <h4>Manajemen Data</h4>
+        <div class="setting-item" @onclick="NavigateToCategories">
+            <span class="setting-icon">🏷️</span>
+            <span class="setting-label">Kelola Kategori</span>
+            <span class="setting-arrow">›</span>
+        </div>
+        <div class="setting-item" @onclick="NavigateToAccounts">
+            <span class="setting-icon">🏦</span>
+            <span class="setting-label">Kelola Akun</span>
+            <span class="setting-arrow">›</span>
+        </div>
+        <div class="setting-item" @onclick="NavigateToBudgets">
+            <span class="setting-icon">🎯</span>
+            <span class="setting-label">Kelola Anggaran</span>
+            <span class="setting-arrow">›</span>
+        </div>
+    </div>
+
+    <div class="settings-group">
+        <h4>Ekspor Data</h4>
+        <div class="setting-item" @onclick="ExportCsvAsync">
+            <span class="setting-icon">📤</span>
+            <span class="setting-label">Ekspor ke CSV</span>
+            <span class="setting-value">@exportStatus</span>
+        </div>
+    </div>
+
+    <div class="settings-group">
+        <h4>Tentang</h4>
+        <div class="setting-item">
+            <span class="setting-icon">🎲</span>
+            <span class="setting-label">Version</span>
+            <span class="setting-value">v1.0.0</span>
+        </div>
+        <div class="setting-item">
+            <span class="setting-icon">💾</span>
+            <span class="setting-label">Database</span>
+            <span class="setting-value">SQLite</span>
+        </div>
+        <div class="setting-item">
+            <span class="setting-icon">📱</span>
+            <span class="setting-label">Platform</span>
+            <span class="setting-value">Android</span>
+        </div>
+        <div class="setting-item">
+            <span class="setting-icon">🛠️</span>
+            <span class="setting-label">Framework</span>
+            <span class="setting-value">.NET MAUI Blazor</span>
+        </div>
+        <div class="setting-item" @onclick="ShowDbInfo">
+            <span class="setting-icon">📁</span>
+            <span class="setting-label">Lokasi Database</span>
+            <span class="setting-arrow">›</span>
+        </div>
+    </div>
+
+    <div class="settings-group">
+        <h4>Untuk Pengembang</h4>
+        <div class="setting-item" @onclick="NavigateToSourceCode">
+            <span class="setting-icon">🫱🏿‍🫲🏼</span>
+            <span class="setting-label">OpenSource On GitHub</span>
+            <span class="setting-arrow">›</span>
+        </div>
+    </div>
+
+    <div class="settings-group">
+        <h4>Reset</h4>
+        <div class="setting-item danger-item" @onclick="ConfirmReset">
+            <span class="setting-icon">⚠️</span>
+            <span class="setting-label">Reset Semua Data</span>
+            <span class="setting-arrow">›</span>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private NavigationManager nav { get; set; } = default!;
+    [Inject] private ExportService exportService { get; set; } = default!;
+
+    private string exportStatus = "";
+
+    private void NavigateToCategories() => nav.NavigateTo("/categories");
+    private void NavigateToAccounts() => nav.NavigateTo("/accounts");
+    private void NavigateToBudgets() => nav.NavigateTo("/budgets");
+    private void NavigateToSourceCode() => nav.NavigateTo("https://github.com/lutfibintoro/KeuanganKu");
+
+    private async Task ExportCsvAsync()
+    {
+        var page = Application.Current!.Windows[0].Page!;
+        exportStatus = "Mengekspor...";
+        try
+        {
+            var path = await exportService.SaveToFileAsync();
+            exportStatus = "Tersimpan!";
+            await page.DisplayAlertAsync("Berhasil", $"Data diekspor ke:\n{path}", "OK");
+        }
+        catch (Exception ex)
+        {
+            exportStatus = "Gagal!";
+            await page.DisplayAlertAsync("Error", ex.Message, "OK");
+        }
+    }
+
+    private async Task ShowDbInfo()
+    {
+        var dbPath = Path.Combine(FileSystem.AppDataDirectory, "finance.db3");
+        var page = Application.Current!.Windows[0].Page!;
+        await page.DisplayAlertAsync("Database", $"Lokasi: {dbPath}", "OK");
+    }
+
+    private async Task ConfirmReset()
+    {
+        var page = Application.Current!.Windows[0].Page!;
+        if (await page.DisplayAlertAsync("Reset Data", "Semua data akan dihapus! Lanjutkan?", "Reset", "Batal"))
+        {
+            try
+            {
+                var dbPath = Path.Combine(FileSystem.AppDataDirectory, "finance.db3");
+                if (File.Exists(dbPath))
+                    File.Delete(dbPath);
+                await page.DisplayAlertAsync("Berhasil", "Data telah direset. Restart aplikasi.", "OK");
+            }
+            catch (Exception ex)
+            {
+                await page.DisplayAlertAsync("Error", ex.Message, "OK");
+            }
+        }
+    }
+}
