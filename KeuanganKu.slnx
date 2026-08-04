@@ -2,4 +2,7 @@
   <Project Path="AndroidUI/AndroidUI.csproj">
     <Deploy />
   </Project>
+  <Project Path="AndroidUIXAML/AndroidUIXAML.csproj" Id="d4d06374-dbd4-4d0b-b257-04bc6daa2a06">
+    <Deploy Solution="Debug|*" />
+  </Project>
 </Solution>
