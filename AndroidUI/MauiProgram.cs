@@ -14,7 +14,7 @@ namespace AndroidUI
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 });
-
+            
             builder.Services.AddMauiBlazorWebView();
 
             builder.Services.AddSingleton<FinanceDatabase>();
@@ -25,6 +25,10 @@ namespace AndroidUI
             builder.Services.AddSingleton<ReportService>();
             builder.Services.AddSingleton<ExportService>();
             builder.Services.AddSingleton<TransferService>();
+            builder.Services.AddSingleton<IconService>();
+            builder.Services.AddSingleton<ColorService>();
+            builder.Services.AddSingleton<ShareService>();
+            builder.Services.AddSingleton<AccountTypeService>();
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

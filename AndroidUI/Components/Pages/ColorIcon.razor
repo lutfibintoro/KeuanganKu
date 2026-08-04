@@ -1,0 +1,81 @@
+﻿@page "/settings/color-icon"
+@layout MainLayout
+
+<div class="page">
+	<div class="page-header">
+		<h2>Warna dan Icon</h2>
+		<button class="btn btn-primary btn-sm" @onclick="GoToAdd">+ Baru</button>
+	</div>
+
+	<h4 class="type-heading">Color</h4>
+	<div class="category-list">
+		@foreach (var colorHex in ColorsHex)
+		{
+			<div class="category-item">
+				<div class="cat-icon" style="@($"background:{colorHex}")"></div>
+				<span class="cat-name">@colorHex</span>
+				<div class="cat-actions">
+					<button class="btn-icon" @onclick="() => ConfirmDeleteColorHex(colorHex)">🗑️</button>
+				</div>
+			</div>
+		}
+	</div>
+
+	<h4 class="type-heading">Icon</h4>
+	<div class="category-list">
+		@foreach (var icon in Icons)
+		{
+			<div class="category-item">
+				<div class="cat-icon" style="background:#FFFFFF">@icon</div>
+				<span class="cat-name">@(Emoji.IsEmoji(icon) ? Emoji.Get(icon).Name : icon)</span>
+				<div class="cat-actions">
+					<button class="btn-icon" @onclick="() => ConfirmDeleteIcon(icon)">🗑️</button>
+				</div>
+			</div>
+		}
+	</div>
+</div>
+
+@code {
+	[Inject] private CategoryService categoryService { get; set; } = default!;
+	[Inject] private NavigationManager nav { get; set; } = default!;
+	[Inject] private IconService iconService { get; set; } = null!;
+	[Inject] private ColorService colorService { get; set; } = null!;
+
+	private string[] ColorsHex = [];
+	private string[] Icons = [];
+
+	protected override async Task OnInitializedAsync()
+	{
+		await Task.Yield();
+		await LoadCategoriesAsync();
+	}
+
+	private async Task LoadCategoriesAsync()
+	{
+		ColorsHex = await colorService.GetAsync();
+		Icons = await iconService.GetAsync();
+	}
+
+	private void GoToAdd() => nav.NavigateTo("/settings/color-icon/add");
+
+	private async Task ConfirmDeleteColorHex(string colorHex)
+	{
+		var page = Application.Current!.Windows[0].Page!;
+		if (await page.DisplayAlertAsync("Hapus Warna", $"Hapus Warna \"{colorHex}\"?", "Hapus", "Batal"))
+		{
+			await colorService.DeleteAsync(colorHex);
+			await LoadCategoriesAsync();
+		}
+	}
+
+	private async Task ConfirmDeleteIcon(string icon)
+	{
+		var page = Application.Current!.Windows[0].Page!;
+		if (await page.DisplayAlertAsync("Hapus Icon", $"Hapus Icon \"{icon}\"?", "Hapus", "Batal"))
+		{
+			await iconService.DeleteAsync(icon);
+			await LoadCategoriesAsync();
+		}
+	}
+}

@@ -14,7 +14,11 @@
                 <option value="@m.Month">@GetMonthName(m.Month)</option>
             }
         </select>
-        <input type="number" class="form-input" @bind="selectedYear" @bind:after="LoadAsync"
+        <input type="number"
+               min="0"
+               step="1"
+               pattern="\d*"
+               class="form-input" @bind="selectedYear" @bind:event="oninput" @bind:after="LoadAsync"
                style="width:80px" />
     </div>
 
@@ -120,11 +124,15 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await Task.Yield();
         await LoadAsync();
     }
 
     private async Task LoadAsync()
     {
+        if (selectedYear > 9999 || selectedYear < 1)
+            selectedYear = DateTime.Now.Year;
+
         monthlySummary = (await reportService.GetMonthlyTrendAsync(selectedYear))
             .FirstOrDefault(t => t.Month == selectedMonth) ?? new ReportService.MonthlySummary(selectedMonth, selectedYear, 0, 0, 0);
 

@@ -7,8 +7,9 @@ namespace AndroidUI.Data.Models
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public string Type { get; set; } = "Cash";
+        public string Type { get; set; } = string.Empty;
         public decimal Balance { get; set; }
+        public decimal InitialBalance { get; set; }
         public string? Icon { get; set; }
         public string? ColorHex { get; set; }
         public int SortOrder { get; set; }

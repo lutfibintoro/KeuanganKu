@@ -25,12 +25,28 @@ namespace AndroidUI.Data
             await _database.CreateTableAsync<Transaction>();
             await _database.CreateTableAsync<Budget>();
             await _database.CreateTableAsync<Transfer>();
+            await _database.CreateTableAsync<User>();
+            await _database.CreateTableAsync<Icon>();
+            await _database.CreateTableAsync<Models.Color>();
+            await _database.CreateTableAsync<AccountType>();
 
             if (await _database.Table<Category>().CountAsync() == 0)
                 await SeedCategoriesAsync();
 
             if (await _database.Table<Account>().CountAsync() == 0)
                 await SeedAccountsAsync();
+
+            if (await _database.Table<Icon>().CountAsync() == 0)
+                await SeedIconAsync();
+
+            if (await _database.Table<Models.Color>().CountAsync() == 0)
+                await SeedColorAsync();
+
+            if (await _database.Table<User>().CountAsync() == 0)
+                await SeedUserAsync();
+
+            if (await _database.Table<AccountType>().CountAsync() == 0)
+                await SeedAccountTypeAsync();
 
             return _database;
         }
@@ -68,11 +84,56 @@ namespace AndroidUI.Data
             var db = await GetConnectionAsync();
             var accounts = new List<Account>
             {
-                new() { Name = "Tunai", Type = "Cash", Icon = "💵", ColorHex = "#4CAF50", SortOrder = 1, Balance = 0 },
+                new() { Name = "Tunai", Type = "Tunai", Icon = "💵", ColorHex = "#4CAF50", SortOrder = 1, Balance = 0 },
                 new() { Name = "Bank", Type = "Bank", Icon = "🏦", ColorHex = "#2196F3", SortOrder = 2, Balance = 0 },
                 new() { Name = "E-Wallet", Type = "E-Wallet", Icon = "📱", ColorHex = "#FF9800", SortOrder = 3, Balance = 0 },
             };
             await db.InsertAllAsync(accounts);
+        }
+
+        private async Task SeedIconAsync()
+        {
+            var db = await GetConnectionAsync();
+            var icon = new Icon()
+            {
+                Icons = "💵/🏦/📱/📈/🐷/💰/💳/🏠/📦/🎯/📤/🤝/💡/🏋️/📚/💊/🎬/📄/🛒/🎓/🚗/🍽️/🎁/💻/🐾/✈️/👕/💍/🔧/🏥"
+            };
+            await db.InsertAsync(icon);
+        }
+
+        private async Task SeedColorAsync()
+        {
+            var db = await GetConnectionAsync();
+            var color = new Models.Color()
+            {
+                ColorsHex = "#F44336/#E91E63/#9C27B0/#3F51B5/#2196F3/#00BCD4/#009688/#4CAF50/#FF9800/#FF5722/#607D8B/#8BC34A/#673AB7/#795548"
+            };
+            await db.InsertAsync(color);
+        }
+
+        private async Task SeedUserAsync()
+        {
+            var db = await GetConnectionAsync();
+            var user = new User()
+            {
+                ColorId = 1,
+                IconId = 1
+            };
+            await db.InsertAsync(user);
+        }
+
+        private async Task SeedAccountTypeAsync()
+        {
+            var db = await GetConnectionAsync();
+            var accountType = new List<AccountType>()
+            {
+                new() { Name = "Tunai" },
+                new() { Name = "Bank" },
+                new() { Name = "E-Wallet" },
+                new() { Name = "Investasi" },
+                new() { Name = "Tabungan" }
+            };
+            await db.InsertAllAsync(accountType);
         }
     }
 }

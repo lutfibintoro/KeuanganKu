@@ -14,7 +14,7 @@
                 @foreach (var acc in accounts)
                 {
                     var balText = $"({FormatRupiah(acc.Balance)})";
-                    <option value="@acc.Id">@(acc.Icon ?? "") @acc.Name @balText</option>
+                    <option value="@acc.Id" disabled=@(model.ToAccountId == acc.Id)>@(acc.Icon ?? "") @acc.Name @balText</option>
                 }
             </select>
         </div>
@@ -26,16 +26,16 @@
                 @foreach (var acc in accounts)
                 {
                     var balText = $"({FormatRupiah(acc.Balance)})";
-                    <option value="@acc.Id">@(acc.Icon ?? "") @acc.Name @balText</option>
+                    <option value="@acc.Id" disabled=@(model.FromAccountId == acc.Id)>@(acc.Icon ?? "") @acc.Name @balText</option>
                 }
             </select>
         </div>
 
         <div class="form-group">
-            <label>Jumlah</label>
+            <label>Jumlah@(decimal.TryParse(amountStr, out decimal amount) ? $": {FormatRupiah(amount)}" : "")</label>
             <div class="input-amount-wrapper">
                 <span class="currency-prefix">Rp</span>
-                <input type="number" class="form-input input-amount" @bind="amountStr"
+                <input type="number" class="form-input input-amount" @bind="amountStr" @bind:event="oninput"
                        placeholder="0" step="500" />
             </div>
         </div>
@@ -68,10 +68,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await Task.Yield();
         accounts = await accountService.GetAllAsync();
     }
 
-    private void GoBack() => nav.NavigateTo("/transactions");
+    private void GoBack() => nav.NavigateTo("/");
 
     private async Task SaveAsync()
     {

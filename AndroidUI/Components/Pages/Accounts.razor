@@ -1,49 +1,96 @@
-@page "/accounts"
+@page "/settings/accounts"
 @layout MainLayout
 
 <div class="page">
-    <div class="page-header">
-        <h2>Akun</h2>
-        <button class="btn btn-primary btn-sm" @onclick="GoToAdd">+ Baru</button>
-    </div>
+	<div class="page-header">
+		<h2>Akun</h2>
+		<button class="btn btn-primary btn-sm" @onclick="GoToAdd">+ Baru</button>
+	</div>
 
-    <div class="total-networth">
-        <span class="nw-label">Total Kekayaan</span>
-        <span class="nw-amount">@FormatRupiah(totalBalance)</span>
-    </div>
+	<div class="total-networth">
+		<span class="nw-label">Total Kekayaan</span>
+		<span class="nw-amount">@FormatRupiah(totalBalance)</span>
+	</div>
 
-    <div class="account-list">
-        @foreach (var acc in accounts)
-        {
-            <div class="account-card" @onclick="() => GoToEdit(acc.Id)">
-                <div class="acc-card-icon" style="background:@(acc.ColorHex ?? "#607D8B")">
-                    @(acc.Icon ?? "🏦")
-                </div>
-                <div class="acc-card-info">
-                    <div class="acc-card-name">@acc.Name</div>
-                    <div class="acc-card-type">@acc.Type</div>
-                </div>
-                <div class="acc-card-balance">@FormatRupiah(acc.Balance)</div>
-            </div>
-        }
-    </div>
+	<div class="account-list">
+		@foreach (var acc in accounts)
+		{
+			<div class="account-card" @onclick="() => GoToEditable(acc.Id)">
+				<div class="acc-card-icon" style="background:@(acc.ColorHex ?? "#607D8B")">
+					@(acc.Icon ?? "🏦")
+				</div>
+				<div class="acc-card-info">
+					<div class="acc-card-name">@acc.Name</div>
+					<div class="acc-card-type">@acc.Type</div>
+				</div>
+				@if (editableAccountId.Contains(acc.Id))
+				{
+					<button class="btn-icon" @onclick="() => GoToEdit(acc.Id)" @onclick:stopPropagation="true">✏️</button>
+					<button class="btn-icon" @onclick="async () => await Delete(acc)" @onclick:stopPropagation="true">🗑️</button>
+				}
+				else
+				{
+					<div class="acc-card-balance">@FormatRupiah(acc.Balance)</div>
+				}
+			</div>
+		}
+	</div>
 </div>
 
 @code {
-    [Inject] private AccountService accountService { get; set; } = default!;
-    [Inject] private NavigationManager nav { get; set; } = default!;
+	[Inject] private AccountService accountService { get; set; } = default!;
+	[Inject] private NavigationManager nav { get; set; } = default!;
 
-    private List<Account> accounts = new();
-    private decimal totalBalance;
+	private List<Account> accounts = new();
+	private List<int> editableAccountId = new();
 
-    protected override async Task OnInitializedAsync()
-    {
-        accounts = await accountService.GetAllAsync();
-        totalBalance = await accountService.GetTotalBalanceAsync();
-    }
+	private decimal totalBalance;
 
-    private void GoToAdd() => nav.NavigateTo("/accounts/add");
-    private void GoToEdit(int id) => nav.NavigateTo($"/accounts/edit/{id}");
+	protected override async Task OnInitializedAsync()
+	{
+		await Task.Yield();
 
-    private string FormatRupiah(decimal amount) => $"Rp{amount:N0}";
+		accounts = await accountService.GetAllAsync();
+		totalBalance = await accountService.GetTotalBalanceAsync();
+	}
+
+	private void GoToAdd() => nav.NavigateTo("/settings/accounts/add");
+	private void GoToEdit(int id) => nav.NavigateTo($"/settings/accounts/edit/{id}");
+
+	private string FormatRupiah(decimal amount) => $"Rp{amount:N0}";
+
+	private void GoToEditable(int id)
+	{
+		if (editableAccountId.Contains(id))
+			editableAccountId.Remove(id);
+		else
+			editableAccountId.Add(id);
+	}
+
+	private async Task Delete(Account account)
+	{
+		var page = Application.Current!.Windows[0].Page!;
+		if (!await page.DisplayAlertAsync("Hapus Akun", "Semua data akan dihapus! Lanjutkan?", "Lanjut", "Batal"))
+			return;
+
+		if (!await page.DisplayAlertAsync("⚠️ Tindakan Beresiko", "Semua riwayat transaksi akan hilang dan tidak dapat dipulihkan!", "Tetap Lanjut", "Batal"))
+			return;
+
+		if (!await page.DisplayAlertAsync("⚠️‼️", "pastikan keputusan sudah final", "Hapus", "Batal"))
+			return;
+
+		try
+		{
+			await accountService.DeleteAsync(account);
+			await page.DisplayAlertAsync("✔️ Berhasil", "Akun telah dihapus.", "OK");
+		}
+		catch (Exception ex)
+		{
+			await page.DisplayAlertAsync("Error", ex.Message, "OK");
+		}
+		finally
+		{
+			nav.NavigateTo("/settings/accounts", true);
+		}
+	}
 }

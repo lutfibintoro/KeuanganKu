@@ -1,4 +1,4 @@
-@page "/budgets"
+@page "/settings/budgets"
 @layout MainLayout
 
 <div class="page">
@@ -12,10 +12,10 @@
             @for (int i = 0; i < 12; i++)
             {
                 var m = DateTime.Now.AddMonths(-i);
-                <option value="@m.Month">@GetMonthName(m.Month) @m.Year</option>
+                <option value="@m.Month">@GetMonthName(m.Month)</option>
             }
         </select>
-        <input type="number" class="form-input" @bind="selectedYear" @bind:after="LoadDataAsync"
+        <input type="number" class="form-input" @bind="selectedYear" @bind:event="oninput" @bind:after="LoadDataAsync"
                style="width:80px" />
     </div>
 
@@ -72,16 +72,20 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await Task.Yield();
         await LoadDataAsync();
     }
 
     private async Task LoadDataAsync()
     {
+        if (selectedYear > 9999 || selectedMonth < 1)
+            selectedYear = DateTime.Now.Year;
+
         budgets = await budgetService.GetByMonthAsync(selectedMonth, selectedYear);
     }
 
-    private void ShowAddForm() => nav.NavigateTo($"/budgets/add?month={selectedMonth}&year={selectedYear}");
-    private void EditBudget(int id) => nav.NavigateTo($"/budgets/edit/{id}");
+    private void ShowAddForm() => nav.NavigateTo($"/settings/budgets/add?month={selectedMonth}&year={selectedYear}");
+    private void EditBudget(int id) => nav.NavigateTo($"/settings/budgets/edit/{id}");
 
     private async Task ConfirmDelete(Budget b)
     {

@@ -1,4 +1,4 @@
-@page "/categories"
+@page "/settings/categories"
 @layout MainLayout
 
 <div class="page">
@@ -47,6 +47,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await Task.Yield();
         await LoadCategoriesAsync();
     }
 
@@ -57,8 +58,8 @@
         expenseCategories = all.Where(c => c.Type == "Expense").ToList();
     }
 
-    private void GoToAdd() => nav.NavigateTo("/categories/add");
-    private void GoToEdit(int id) => nav.NavigateTo($"/categories/edit/{id}");
+    private void GoToAdd() => nav.NavigateTo("/settings/categories/add");
+    private void GoToEdit(int id) => nav.NavigateTo($"/settings/categories/edit/{id}");
 
     private async Task ConfirmDelete(Category cat)
     {

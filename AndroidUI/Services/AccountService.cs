@@ -6,8 +6,13 @@ namespace AndroidUI.Services
     public class AccountService
     {
         private readonly FinanceDatabase _db;
+        private readonly IServiceProvider _serviceProvider;
 
-        public AccountService(FinanceDatabase db) => _db = db;
+        public AccountService(FinanceDatabase db, IServiceProvider serviceProvider)
+        {
+            _db = db;
+            _serviceProvider = serviceProvider;
+        }
 
         public async Task<List<Account>> GetAllAsync()
         {
@@ -33,6 +38,27 @@ namespace AndroidUI.Services
         public async Task DeleteAsync(Account account)
         {
             var db = await _db.GetDatabaseAsync();
+
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var transferService = scope.ServiceProvider.GetRequiredService<TransferService>();
+                var transactionService = scope.ServiceProvider.GetRequiredService<TransactionService>();
+
+                var transfer = await db.Table<Transfer>()
+                    .Where(t => t.FromAccountId == account.Id || t.ToAccountId == account.Id)
+                    .ToListAsync();
+
+                foreach (var t in transfer)
+                    await transferService.DeleteAsync(t);
+
+                var transaction = await db.Table<Transaction>()
+                    .Where(t => t.AccountId == account.Id)
+                    .ToListAsync();
+
+                foreach (var t in transaction)
+                    await transactionService.DeleteAsync(t);
+            }
+
             await db.DeleteAsync(account);
         }
 
@@ -51,7 +77,7 @@ namespace AndroidUI.Services
             var account = await db.FindAsync<Account>(accountId);
             if (account is not null)
             {
-                account.Balance = income + received - expense - sent;
+                account.Balance = account.InitialBalance + income + received - expense - sent;
                 await db.UpdateAsync(account);
             }
         }

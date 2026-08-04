@@ -23,16 +23,21 @@
             <span class="setting-label">Kelola Anggaran</span>
             <span class="setting-arrow">›</span>
         </div>
+        <div class="setting-item" @onclick="NavigateToColorIcon">
+            <span class="setting-icon">🖼️</span>
+            <span class="setting-label">Kelola Warna dan Icon</span>
+            <span class="setting-arrow">›</span>
+        </div>
     </div>
 
-    <div class="settings-group">
+    @* <div class="settings-group">
         <h4>Ekspor Data</h4>
         <div class="setting-item" @onclick="ExportCsvAsync">
             <span class="setting-icon">📤</span>
             <span class="setting-label">Ekspor ke CSV</span>
             <span class="setting-value">@exportStatus</span>
         </div>
-    </div>
+    </div> *@
 
     <div class="settings-group">
         <h4>Tentang</h4>
@@ -70,6 +75,11 @@
             <span class="setting-label">OpenSource On GitHub</span>
             <span class="setting-arrow">›</span>
         </div>
+        <div class="setting-item" @onclick="NavigateToDonation">
+            <span class="setting-icon">👨‍💻</span>
+            <span class="setting-label">Dukung Developer</span>
+            <span class="setting-arrow">›</span>
+        </div>
     </div>
 
     <div class="settings-group">
@@ -88,10 +98,14 @@
 
     private string exportStatus = "";
 
-    private void NavigateToCategories() => nav.NavigateTo("/categories");
-    private void NavigateToAccounts() => nav.NavigateTo("/accounts");
-    private void NavigateToBudgets() => nav.NavigateTo("/budgets");
+    private void NavigateToCategories() => nav.NavigateTo("/settings/categories");
+    private void NavigateToAccounts() => nav.NavigateTo("/settings/accounts");
+    private void NavigateToBudgets() => nav.NavigateTo("/settings/budgets");
+    private void NavigateToColorIcon() => nav.NavigateTo("/settings/color-icon");
+    private void NavigateToDonation() => nav.NavigateTo("/settings/developer/donation");
     private void NavigateToSourceCode() => nav.NavigateTo("https://github.com/lutfibintoro/KeuanganKu");
+
+    protected override async Task OnInitializedAsync() => await Task.Yield();
 
     private async Task ExportCsvAsync()
     {
@@ -132,6 +146,10 @@
             catch (Exception ex)
             {
                 await page.DisplayAlertAsync("Error", ex.Message, "OK");
+            }
+            finally
+            {
+                Application.Current?.Quit();
             }
         }
     }

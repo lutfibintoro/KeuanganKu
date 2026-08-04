@@ -11,8 +11,18 @@
 		<div class="form-group">
 			<label>Tipe</label>
 			<div class="type-toggle">
-				<button class="toggle-btn @(model.Type == "Income" ? "active-income" : "")" @onclick='() => SetType("Income")'>💵 Pemasukan</button>
-				<button class="toggle-btn @(model.Type == "Expense" ? "active-expense" : "")" @onclick='() => SetType("Expense")'>💳 Pengeluaran</button>
+				@if (!isEdit || model.Type == "Income")
+				{
+					<button class="toggle-btn @(model.Type == "Income" ? "active-income" : "")" @onclick='() => SetType("Income")'>💵 Pemasukan</button>
+				}
+				@if (!isEdit || model.Type == "Expense")
+				{
+					<button class="toggle-btn @(model.Type == "Expense" ? "active-expense" : "")" @onclick='() => SetType("Expense")'>💳 Pengeluaran</button>
+				}
+				@* @if (!isEdit)
+				{
+					<button class="toggle-btn @(model.Type != "Expense" && model.Type != "Income" ? "active-expense" : "")" @onclick='() => SetType("Expense")'>🔄 Transfer</button>
+				} *@
 			</div>
 		</div>
 
@@ -21,7 +31,7 @@
 			<div class="input-amount-wrapper">
 				<span class="currency-prefix">Rp</span>
 				<input type="number" class="form-input input-amount" @bind="inputAmount" @bind:event="oninput"
-					   placeholder="0" step="500" />
+					   placeholder="0" step="500" disabled="@isEdit" style="@(isEdit ? "opacity: 0.5;" : "")" />
 			</div>
 		</div>
 
@@ -38,7 +48,7 @@
 
 		<div class="form-group">
 			<label>Akun</label>
-			<select class="form-select" @bind="model.AccountId">
+			<select class="form-select" @bind="model.AccountId" disabled="@isEdit" style="@(isEdit ? "opacity: 0.5;" : "")">
 				<option value="0">Pilih akun...</option>
 				@foreach (var acc in accounts)
 				{
@@ -50,7 +60,7 @@
 
 		<div class="form-group">
 			<label>Tanggal</label>
-			<input type="date" class="form-input" @bind="model.Date" />
+			<input type="date" class="form-input" @bind="model.Date" disabled="@isEdit" style="@(isEdit ? "opacity: 0.5;" : "")" />
 		</div>
 
 		<div class="form-group">
@@ -83,6 +93,8 @@
 
 	protected override async Task OnInitializedAsync()
 	{
+		await Task.Yield();
+
 		accounts = await accountService.GetAllAsync();
 		isEdit = Id > 0;
 
@@ -111,6 +123,9 @@
 
 	private async void SetType(string type)
 	{
+		if (isEdit)
+			return;
+
 		model.Type = type;
 		model.CategoryId = null;
 		await LoadCategoriesAsync();

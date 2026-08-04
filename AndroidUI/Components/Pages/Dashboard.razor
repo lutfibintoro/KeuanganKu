@@ -2,154 +2,156 @@
 @layout MainLayout
 
 <div class="page dashboard-page">
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="error-container">
-            <div class="empty-state">
-                <div class="empty-icon">⚠️</div>
-                <p>@errorMessage</p>
-                <button class="btn btn-primary" @onclick="LoadDataAsync">Coba Lagi</button>
-            </div>
-        </div>
-    }
-    else
-    {
-    <div class="balance-card">
-        <div class="balance-label">Total Saldo</div>
-        <div class="balance-amount">@FormatRupiah(totalBalance)</div>
-        <div class="balance-row">
-            <span class="balance-income">+@FormatRupiah(monthlyIncome)</span>
-            <span class="balance-expense">-@FormatRupiah(monthlyExpense)</span>
-        </div>
-    </div>
+	@if (!string.IsNullOrEmpty(errorMessage))
+	{
+		<div class="error-container">
+			<div class="empty-state">
+				<div class="empty-icon">⚠️</div>
+				<p>@errorMessage</p>
+				<button class="btn btn-primary" @onclick="LoadDataAsync">Coba Lagi</button>
+			</div>
+		</div>
+	}
+	else
+	{
+		<div class="balance-card">
+			<div class="balance-label">Total Saldo</div>
+			<div class="balance-amount">@FormatRupiah(totalBalance)</div>
+			<div class="balance-row">
+				<span class="balance-income">+@FormatRupiah(monthlyIncome)</span>
+				<span class="balance-expense">-@FormatRupiah(monthlyExpense)</span>
+			</div>
+		</div>
 
-    <div class="quick-actions">
-        <button class="btn btn-income" @onclick="GoToAddIncome">
-            <span>➕</span> Pemasukan
-        </button>
-        <button class="btn btn-expense" @onclick="GoToAddExpense">
-            <span>➖</span> Pengeluaran
-        </button>
-        <button class="btn btn-transfer" @onclick="GoToTransfer">
-            <span>🔄</span> Transfer
-        </button>
-    </div>
+		<div class="quick-actions">
+			<button class="btn btn-income" @onclick="GoToAddIncome">
+				<span>➕</span> Pemasukan
+			</button>
+			<button class="btn btn-expense" @onclick="GoToAddExpense">
+				<span>➖</span> Pengeluaran
+			</button>
+			<button class="btn btn-transfer" @onclick="GoToTransfer">
+				<span>🔄</span> Transfer
+			</button>
+		</div>
 
-    @if (recentTransactions.Count > 0)
-    {
-        <div class="section">
-            <div class="section-header">
-                <h3>Transaksi Terbaru</h3>
-                <a href="/transactions" class="see-all">Lihat Semua</a>
-            </div>
-            <div class="transaction-list">
-                @foreach (var t in recentTransactions)
-                {
-                    <div class="transaction-item" @onclick="() => GoToTransaction(t.Id)">
-                        <div class="trans-icon" style="background:@(t.Category?.ColorHex ?? "#607D8B")">
-                            @(t.Category?.Icon ?? "📄")
-                        </div>
-                        <div class="trans-info">
-                            <div class="trans-category">@(t.Category?.Name ?? "Tanpa Kategori")</div>
-                            <div class="trans-account">@(t.Account?.Name ?? "") @if (!string.IsNullOrEmpty(t.Note)) { <span>· @t.Note</span> }</div>
-                        </div>
-                        <div class="trans-amount @(t.Type == "Income" ? "text-income" : "text-expense")">
-                            @(t.Type == "Income" ? "+" : "-")@FormatRupiah(t.Amount)
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
-    }
+		@if (recentTransactions.Count > 0)
+		{
+			<div class="section">
+				<div class="section-header">
+					<h3>Transaksi Terbaru</h3>
+					<a href="/transactions" class="see-all">Lihat Semua</a>
+				</div>
+				<div class="transaction-list">
+					@foreach (var t in recentTransactions)
+					{
+						<div class="transaction-item" @onclick="() => GoToTransaction(t.Id)">
+							<div class="trans-icon" style="background:@(t.Category?.ColorHex ?? "#607D8B")">
+								@(t.Category?.Icon ?? "📄")
+							</div>
+							<div class="trans-info">
+								<div class="trans-category">@(t.Category?.Name ?? "Tanpa Kategori")</div>
+								<div class="trans-account">@(t.Date.ToString("dd MMM")) • @(t.Account?.Name ?? "") • @(t?.Note ?? "")</div>
+							</div>
+							<div class="trans-amount @(t?.Type == "Income" ? "text-income" : "text-expense")">
+								@(t?.Type == "Income" ? "+" : "-")@FormatRupiah(t.Amount)
+							</div>
+						</div>
+					}
+				</div>
+			</div>
+		}
 
-    <div class="section">
-        <div class="section-header">
-            <h3>Akun</h3>
-            <a href="/accounts" class="see-all">Kelola</a>
-        </div>
-        <div class="account-summary">
-            @foreach (var acc in accounts)
-            {
-                <div class="account-item">
-                    <span class="acc-icon">@(acc.Icon ?? "🏦")</span>
-                    <span class="acc-name">@acc.Name</span>
-                    <span class="acc-balance">@FormatRupiah(acc.Balance)</span>
-                </div>
-            }
-        </div>
-    </div>
+		<div class="section">
+			<div class="section-header">
+				<h3>Akun</h3>
+				<a href="/accounts" class="see-all">Kelola</a>
+			</div>
+			<div class="account-summary">
+				@foreach (var acc in accounts)
+				{
+					<div class="account-item">
+						<span class="acc-icon">@(acc.Icon ?? "🏦")</span>
+						<span class="acc-name">@acc.Name</span>
+						<span class="acc-balance">@FormatRupiah(acc.Balance)</span>
+					</div>
+				}
+			</div>
+		</div>
 
-    @if (budgets.Count > 0)
-    {
-        <div class="section">
-            <div class="section-header">
-                <h3>Anggaran Bulan Ini</h3>
-                <a href="/budgets" class="see-all">Detail</a>
-            </div>
-            @foreach (var b in budgets.Take(3))
-            {
-                var pct = b.Amount > 0 ? Math.Min(b.Spent / b.Amount * 100, 100) : 0;
-                <div class="budget-item">
-                    <div class="budget-header">
-                        <span>@(b.Category?.Icon ?? "") @(b.Category?.Name ?? "")</span>
-                        <span>@FormatRupiah(b.Spent) / @FormatRupiah(b.Amount)</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill @(pct >= 100 ? "danger" : pct >= 80 ? "warning" : "safe")"
-                             style="width:@(pct)%"></div>
-                    </div>
-                </div>
-            }
-        </div>
-    }
-    }
+		@if (budgets.Count > 0)
+		{
+			<div class="section">
+				<div class="section-header">
+					<h3>Anggaran Bulan Ini</h3>
+					<a href="/budgets" class="see-all">Detail</a>
+				</div>
+				@foreach (var b in budgets.Take(3))
+				{
+					var pct = b.Amount > 0 ? Math.Min(b.Spent / b.Amount * 100, 100) : 0;
+					<div class="budget-item">
+						<div class="budget-header">
+							<span>@(b.Category?.Icon ?? "") @(b.Category?.Name ?? "")</span>
+							<span>@FormatRupiah(b.Spent) / @FormatRupiah(b.Amount)</span>
+						</div>
+						<div class="progress-bar">
+							<div class="progress-fill @(pct >= 100 ? "danger" : pct >= 80 ? "warning" : "safe")"
+								 style="width:@($"{pct}%")"></div>
+						</div>
+					</div>
+				}
+			</div>
+		}
+	}
 </div>
 
 @code {
-    [Inject] private TransactionService transactionService { get; set; } = default!;
-    [Inject] private AccountService accountService { get; set; } = default!;
-    [Inject] private BudgetService budgetService { get; set; } = default!;
-    [Inject] private NavigationManager nav { get; set; } = default!;
+	[Inject] private TransactionService transactionService { get; set; } = default!;
+	[Inject] private AccountService accountService { get; set; } = default!;
+	[Inject] private BudgetService budgetService { get; set; } = default!;
+	[Inject] private NavigationManager nav { get; set; } = default!;
 
-    private decimal totalBalance;
-    private decimal monthlyIncome;
-    private decimal monthlyExpense;
-    private List<Transaction> recentTransactions = new();
-    private List<Account> accounts = new();
-    private List<Budget> budgets = new();
-    private string? errorMessage;
+	private decimal totalBalance;
+	private decimal monthlyIncome;
+	private decimal monthlyExpense;
+	private List<Transaction> recentTransactions = new();
+	private List<Account> accounts = new();
+	private List<Budget> budgets = new();
+	private string? errorMessage;
 
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            await LoadDataAsync();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Gagal memuat data: {ex.Message}";
-        }
-    }
+	protected override async Task OnInitializedAsync()
+	{
+		await Task.Yield();
 
-    private async Task LoadDataAsync()
-    {
-        errorMessage = null;
-        totalBalance = await accountService.GetTotalBalanceAsync();
-        accounts = await accountService.GetAllAsync();
+		try
+		{
+			await LoadDataAsync();
+		}
+		catch (Exception ex)
+		{
+			errorMessage = $"Gagal memuat data: {ex.Message}";
+		}
+	}
 
-        var now = DateTime.Now;
-        var summary = await transactionService.GetMonthlySummaryAsync(now.Month, now.Year);
-        monthlyIncome = summary.Income;
-        monthlyExpense = summary.Expense;
+	private async Task LoadDataAsync()
+	{
+		errorMessage = null;
+		totalBalance = await accountService.GetTotalBalanceAsync();
+		accounts = await accountService.GetAllAsync();
 
-        recentTransactions = await transactionService.GetRecentAsync(5);
-        budgets = await budgetService.GetByMonthAsync(now.Month, now.Year);
-    }
+		var now = DateTime.Now;
+		var summary = await transactionService.GetMonthlySummaryAsync(now.Month, now.Year);
+		monthlyIncome = summary.Income;
+		monthlyExpense = summary.Expense;
 
-    private void GoToAddIncome() => nav.NavigateTo("/transactions/add/Income");
-    private void GoToAddExpense() => nav.NavigateTo("/transactions/add/Expense");
-    private void GoToTransfer() => nav.NavigateTo("/transactions/transfer");
-    private void GoToTransaction(int id) => nav.NavigateTo($"/transactions/edit/{id}");
+		recentTransactions = await transactionService.GetRecentAsync(5);
+		budgets = await budgetService.GetByMonthAsync(now.Month, now.Year);
+	}
 
-    private string FormatRupiah(decimal amount) => $"Rp{amount:N0}";
+	private void GoToAddIncome() => nav.NavigateTo("/transactions/add/Income");
+	private void GoToAddExpense() => nav.NavigateTo("/transactions/add/Expense");
+	private void GoToTransfer() => nav.NavigateTo("/transactions/transfer");
+	private void GoToTransaction(int id) => nav.NavigateTo($"/transactions/edit/{id}");
+
+	private string FormatRupiah(decimal amount) => $"Rp{amount:N0}";
 }

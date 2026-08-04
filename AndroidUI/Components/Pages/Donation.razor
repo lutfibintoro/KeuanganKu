@@ -1,0 +1,43 @@
+﻿@page "/settings/developer/donation"
+@layout MainLayout
+
+<div class="page">
+	<div class="page-header">
+		<h2>Donasi Ke Pengembang</h2>
+	</div>
+
+	<div class="form-card">
+		<div class="form-group">
+			<img src="/@imageAssets" style="width: 100%; height: 100%;" />
+		</div>
+
+		<div class="form-actions">
+			<button class="btn btn-primary" @onclick="ShareAsync">Share</button>
+		</div>
+	</div>
+</div>
+
+@code {
+	[Inject] private ShareService shareService { get; set; } = null!;
+
+	private string imageAssets = "images/donation.jpeg";
+	private string cacheImage = Path.Combine(FileSystem.CacheDirectory, "cache_donation.jpeg");
+
+	protected override async Task OnInitializedAsync()
+	{
+		await Task.Yield();
+	}
+
+	private async Task ShareAsync()
+	{
+		try
+		{
+			await shareService.ShareImageAsync(imageAssets, cacheImage);
+		}
+		catch (Exception)
+		{
+			var page = Application.Current!.Windows[0].Page!;
+			await page.DisplayAlertAsync("Error", $"Terjadi kesalahan, coba lagi setelah beberapa saat.", "OK");
+		}
+	}
+}

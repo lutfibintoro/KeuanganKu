@@ -1,0 +1,153 @@
+﻿@page "/settings/color-icon/add"
+@layout MainLayout
+
+
+<div class="page">
+	<div class="page-header">
+		<h2>Tambah Warna dan Icon</h2>
+	</div>
+
+	<div class="form-card">
+		<div class="form-group">
+			<label>Icon@(string.IsNullOrEmpty(iconValue) ? "" : $": {Emoji.Get(iconValue).Name}")</label>
+			<div class="input-amount-wrapper">
+				<input type="text" class="form-input" @bind="iconInput" @bind:event="oninput" @bind:after="LimitIcon" />
+				<span class="currency-prefix">@iconValue</span>
+			</div>
+			<span class="added">@ListAddedIcon()</span>
+		</div>
+
+		<div class="form-actions">
+			<button class="btn btn-secondary" @onclick="Cancel">Batal</button>
+			<button class="btn btn-primary" @onclick="SaveIconAsync">Simpan</button>
+		</div>
+	</div>
+
+	<br />
+
+	<div class="form-card">
+		<div class="form-group">
+			<label>Color Hex@(string.IsNullOrEmpty(colorInput) ? "" : $": {colorInput}")</label>
+			<div class="input-amount-wrapper">
+				<label for="input-color" class="form-input" style="@($"background:{colorInput}; color:") @(string.IsNullOrEmpty(colorInput) ? "#FFFFFF" : colorInput)">.</label>
+				<input id="input-color" type="color" style="display: none" @bind="colorInput" @bind:event="oninput" />
+			</div>
+			<div class="added">
+				@foreach (string col in addedColorLists)
+				{
+					<div class="added-child" style="@($"background:{col}")"></div>@(" ")
+				}
+			</div>
+		</div>
+
+		<div class="form-actions">
+			<button class="btn btn-secondary" @onclick="Cancel">Batal</button>
+			<button class="btn btn-primary" @onclick="SaveColorAsync">Simpan</button>
+		</div>
+	</div>
+</div>
+
+@code {
+	[Inject] private NavigationManager nav { get; set; } = default!;
+	[Inject] private IconService iconService { get; set; } = null!;
+	[Inject] private ColorService colorService { get; set; } = null!;
+
+	private string iconInput = string.Empty;
+	private string iconValue = string.Empty;
+	private StringBuilder addedIconList = new("");
+
+	private string colorInput = string.Empty;
+	private List<string> addedColorLists = [];
+
+	protected override async Task OnInitializedAsync()
+	{
+		await Task.Yield();
+	}
+
+	private string ListAddedIcon()
+	{
+		string lists = addedIconList.ToString();
+
+		if (string.IsNullOrEmpty(lists))
+			return "";
+
+		return lists;
+	}
+
+	private void LimitIcon()
+	{
+		string currentValue = iconInput;
+
+		if (string.IsNullOrEmpty(currentValue) || string.IsNullOrWhiteSpace(currentValue))
+		{
+			iconInput = "";
+			iconValue = "";
+			return;
+		}
+
+		currentValue = StringInfo.GetNextTextElement(currentValue);
+
+		if (!Emoji.IsEmoji(currentValue))
+		{
+			iconInput = "";
+			iconValue = "";
+			return;
+		}
+
+		iconInput = "";
+		iconValue = currentValue;
+	}
+
+	private bool IsValidColor(string colorHex)
+	{
+		if (string.IsNullOrEmpty(colorHex) || string.IsNullOrWhiteSpace(colorHex))
+			return false;
+
+		if (colorHex.Length != 7 || !colorHex.StartsWith('#'))
+			return false;
+
+
+		string hex = colorHex.Substring(1);
+		return int.TryParse(hex, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int _);
+	}
+
+	private void Cancel()
+	{
+		iconValue = "";
+		colorInput = "";
+	}
+
+	private async Task SaveIconAsync()
+	{
+		if (string.IsNullOrEmpty(iconValue) || string.IsNullOrWhiteSpace(iconValue))
+			return;
+
+		if (!Emoji.IsEmoji(iconValue))
+			return;
+
+		await iconService.AddAsync(iconValue);
+
+		addedIconList.Append(iconValue);
+		iconValue = "";
+	}
+
+	private async Task SaveColorAsync()
+	{
+		if (string.IsNullOrEmpty(colorInput) || string.IsNullOrWhiteSpace(colorInput))
+		{
+			colorInput = "";
+			return;
+		}
+
+		if (!IsValidColor(colorInput))
+		{
+			colorInput = "";
+			return;
+		}
+
+		await colorService.AddAsync(colorInput.ToUpper());
+
+		addedColorLists.Add(colorInput);
+		colorInput = "";
+	}
+}

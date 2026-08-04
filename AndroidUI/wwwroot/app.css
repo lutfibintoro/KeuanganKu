@@ -305,6 +305,9 @@ a, button, .transaction-item, .account-card, .setting-item, .account-item {
 .trans-category {
     font-weight: 600;
     font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .trans-account {
@@ -538,6 +541,23 @@ a, button, .transaction-item, .account-card, .setting-item, .account-item {
     pointer-events: none;
 }
 
+.added {
+    font-size: 12px;
+    display: inline-block;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    max-width: 100%;
+}
+
+.added-child {
+    font-size: 12px;
+    display: inline-block;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    width: 14px;
+    height: 14px;
+}
+
 .input-amount {
     padding-left: 44px;
     font-size: 24px;
@@ -671,12 +691,16 @@ a, button, .transaction-item, .account-card, .setting-item, .account-item {
     color: #fff;
     flex-shrink: 0;
     pointer-events: none;
+    color: var(--primary);
 }
 
 .cat-name {
     flex: 1;
     font-weight: 500;
     pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .cat-actions {

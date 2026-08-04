@@ -1,5 +1,5 @@
-@page "/categories/add"
-@page "/categories/edit/{Id:int}"
+@page "/settings/categories/add"
+@page "/settings/categories/edit/{Id:int}"
 @layout MainLayout
 
 <div class="page">
@@ -10,7 +10,7 @@
     <div class="form-card">
         <div class="form-group">
             <label>Tipe</label>
-            <select class="form-select" @bind="model.Type">
+            <select class="form-select" @bind="model.Type" disabled="@isEdit" style="@(isEdit ? "opacity: 0.5;" : "")">
                 <option value="Income">💵 Pemasukan</option>
                 <option value="Expense">💳 Pengeluaran</option>
             </select>
@@ -59,15 +59,19 @@
 
     [Inject] private CategoryService categoryService { get; set; } = default!;
     [Inject] private NavigationManager nav { get; set; } = default!;
+    [Inject] private IconService iconService { get; set; } = null!;
+    [Inject] private ColorService colorService { get; set; } = null!;
 
     private Category model = new() { ColorHex = "#607D8B", Icon = "📄", Type = "Expense" };
     private bool isEdit;
 
-    private readonly string[] availableIcons = { "🍽️", "🚗", "🛒", "📄", "🎬", "💊", "📚", "🏋️", "🤝", "💰", "💻", "📈", "🎁", "🏠", "🐾", "✈️", "👕", "📱", "💡", "📤", "📥", "🎓", "👶", "💍", "🎂", "🔧", "🏥" };
-    private readonly string[] availableColors = { "#F44336", "#E91E63", "#9C27B0", "#673AB7", "#3F51B5", "#2196F3", "#00BCD4", "#009688", "#4CAF50", "#8BC34A", "#FF9800", "#FF5722", "#795548", "#607D8B" };
+    private string[] availableIcons = [];
+    private string[] availableColors = [];
 
     protected override async Task OnInitializedAsync()
     {
+        await Task.Yield();
+
         isEdit = Id > 0;
         if (isEdit)
         {
@@ -75,14 +79,17 @@
             if (existing is not null)
                 model = existing;
         }
+
+        availableIcons = await iconService.GetAsync();
+        availableColors = await colorService.GetAsync();
     }
 
-    private void GoBack() => nav.NavigateTo("/categories");
+    private void GoBack() => nav.NavigateTo("/settings/categories");
 
     private async Task SaveAsync()
     {
         if (string.IsNullOrWhiteSpace(model.Name)) return;
         await categoryService.SaveAsync(model);
-        nav.NavigateTo("/categories");
+        nav.NavigateTo("/settings/categories");
     }
 }
