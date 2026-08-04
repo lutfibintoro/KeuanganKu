@@ -18,14 +18,17 @@
 			@if (model.Type != "Lainnya")
 			{
 				<div class="filter-bar">
-					<select class="form-select" @bind="model.Type" disabled="@isEdit" style="@(isEdit ? "opacity: 0.5;" : "")width: 75%">
+					<select class="form-select" @bind="model.Type" disabled="@isEdit" style="@(isEdit ? "opacity: 0.5;" : "width: 75%")">
 						@foreach (AccountType type in availableAccountTypes)
 						{
 							<option value="@(type.Name)">@(type.Name)</option>
 						}
 						<option value="Lainnya">Lainnya...</option>
 					</select>
-					<button class="btn btn-secondary" style="width: 25%" @onclick='DeleteTypeAsync'>Hapus</button>
+					@if (!isEdit)
+					{
+						<button class="btn btn-secondary" style="width: 25%" @onclick='DeleteTypeAsync'>Hapus</button>
+					}
 				</div>
 			}
 			else
