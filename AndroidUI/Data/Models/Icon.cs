@@ -9,6 +9,8 @@ namespace AndroidUI.Data.Models
     {
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
+        // list icon dipisah dengan /
+        // contoh "🐷/💰/💳/🏠/📦/🎯/📤/🤝/💡"
         public string Icons { get; set; } = string.Empty;
     }
 }

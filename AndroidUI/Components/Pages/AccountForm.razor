@@ -121,7 +121,15 @@
 		availableColors = await colorService.GetAsync();
 		availableAccountTypes = await accountTypeService.GetAllAccountTypeAsync();
 
-		SetType();
+		if (isEdit && !availableAccountTypes.Any(at => at.Name == model.Type))
+		{
+			tipeAkunNewOption = model.Type;
+			await SaveTypeAsync();
+		}
+
+		if (!isEdit)
+			SetType();
+
 	}
 
 	private void GoBack() => nav.NavigateTo("/settings/accounts");

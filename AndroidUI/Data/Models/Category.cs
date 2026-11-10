@@ -7,8 +7,11 @@ namespace AndroidUI.Data.Models
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
+        // Income or Expense
         public string Type { get; set; } = "Expense";
+        // ambil dari table icon lalu logic untuk ambil 1 saja
         public string? Icon { get; set; }
+        // ambil dari table color lalu logic untuk ambil 1 saja
         public string? ColorHex { get; set; }
         public int SortOrder { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

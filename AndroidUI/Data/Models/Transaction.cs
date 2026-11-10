@@ -9,6 +9,7 @@ namespace AndroidUI.Data.Models
         public int Id { get; set; }
         public int AccountId { get; set; }
         public int? CategoryId { get; set; }
+        // Income or Expense
         public string Type { get; set; } = "Expense";
         public decimal Amount { get; set; }
         public string? Note { get; set; }
